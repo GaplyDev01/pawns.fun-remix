@@ -42,6 +42,19 @@ export default async function LobbyPage() {
     }),
   )
 
+  // Format challenges for the component
+  const formattedChallenges = (challenges || []).map((challenge) => ({
+    id: challenge.id,
+    challenger: {
+      id: challenge.challenger.id,
+      username: challenge.challenger.username,
+      avatar_url: challenge.challenger.avatar_url,
+    },
+    time_control: challenge.time_control,
+    color_preference: challenge.color_preference,
+    created_at: challenge.created_at,
+  }))
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -57,7 +70,7 @@ export default async function LobbyPage() {
 
         <div>
           <h2 className="text-xl font-semibold mb-4">Active Challenges</h2>
-          <ChallengesList challenges={challenges || []} />
+          <ChallengesList challenges={formattedChallenges} />
         </div>
       </div>
     </div>
