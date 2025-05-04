@@ -1,30 +1,63 @@
-# pawns.fun remix
+# Pawns.fun
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
+A Next.js 14 chess platform with real-time gameplay, leaderboards, and blockchain integration.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/gaply-labs/v0-feature-rich-chess-game)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/6WurWgHPs06)
+## Tech Stack
 
-## Overview
+- **Framework**: Next.js 14 (App Router, TypeScript)
+- **Styling**: Tailwind CSS with custom tokens
+- **Component kit**: shadcn/ui v4
+- **Motion**: Framer Motion 11
+- **Icons**: lucide-react
+- **Database**: Supabase
+- **3D Effects**: react-three-fiber
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
+## Getting Started
 
-## Deployment
+1. Clone the repository:
 
-Your project is live at:
+\`\`\`bash
+git clone https://github.com/yourusername/pawns-fun.git
+cd pawns-fun
+\`\`\`
 
-**[https://vercel.com/gaply-labs/v0-feature-rich-chess-game](https://vercel.com/gaply-labs/v0-feature-rich-chess-game)**
+2. Install dependencies:
 
-## Build your app
+\`\`\`bash
+npm install
+\`\`\`
 
-Continue building your app on:
+3. Set up environment variables:
 
-**[https://v0.dev/chat/projects/6WurWgHPs06](https://v0.dev/chat/projects/6WurWgHPs06)**
+\`\`\`bash
+cp .env.example .env
+\`\`\`
 
-## How It Works
+4. Start the development server:
 
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+\`\`\`bash
+vercel dev
+\`\`\`
+
+## Features
+
+- Real-time chess gameplay
+- Matchmaking system
+- Leaderboards (global and friends)
+- User profiles with rating history
+- In-game chat
+- Customizable board themes and piece styles
+- Responsive design for all devices
+
+## Project Structure
+
+- `app/`: Next.js App Router pages and layouts
+- `components/`: Reusable UI components
+- `lib/`: Utility functions and API clients
+- `hooks/`: Custom React hooks
+- `types/`: TypeScript type definitions
+- `public/`: Static assets
+
+## License
+
+MIT
