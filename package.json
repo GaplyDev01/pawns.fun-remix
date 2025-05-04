@@ -75,7 +75,9 @@
     "chess.js": "latest",
     "canvas-confetti": "latest",
     "@supabase/ssr": "latest",
-    "@tanstack/react-virtual": "latest"
+    "@tanstack/react-virtual": "latest",
+    "lru-cache": "latest",
+    "uuid": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",

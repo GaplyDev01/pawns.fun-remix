@@ -16,6 +16,8 @@ export interface Database {
           white_id: string | null
           white_time_remaining: number | null
           black_time_remaining: number | null
+          increment_ms: number | null
+          is_ai_game: boolean | null
         }
         Insert: {
           black_id?: string | null
@@ -29,6 +31,8 @@ export interface Database {
           white_id?: string | null
           white_time_remaining?: number | null
           black_time_remaining?: number | null
+          increment_ms?: number | null
+          is_ai_game?: boolean | null
         }
         Update: {
           black_id?: string | null
@@ -42,6 +46,8 @@ export interface Database {
           white_id?: string | null
           white_time_remaining?: number | null
           black_time_remaining?: number | null
+          increment_ms?: number | null
+          is_ai_game?: boolean | null
         }
         Relationships: [
           {
@@ -58,6 +64,104 @@ export interface Database {
           },
         ]
       }
+      challenges: {
+        Row: {
+          id: string
+          created_at: string
+          challenger_id: string
+          acceptor_id: string | null
+          time_control: string
+          color_preference: string
+          status: string
+          game_id: string | null
+          initial_time_ms: number
+          increment_ms: number
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          challenger_id: string
+          acceptor_id?: string | null
+          time_control: string
+          color_preference: string
+          status?: string
+          game_id?: string | null
+          initial_time_ms: number
+          increment_ms: number
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          challenger_id?: string
+          acceptor_id?: string | null
+          time_control?: string
+          color_preference?: string
+          status?: string
+          game_id?: string | null
+          initial_time_ms?: number
+          increment_ms?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenges_challenger_id_fkey"
+            columns: ["challenger_id"]
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenges_acceptor_id_fkey"
+            columns: ["acceptor_id"]
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenges_game_id_fkey"
+            columns: ["game_id"]
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_game_sessions: {
+        Row: {
+          id: string
+          created_at: string
+          game_id: string
+          user_id: string
+          ai_level: string
+          user_plays_as: string
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          game_id: string
+          user_id: string
+          ai_level: string
+          user_plays_as: string
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          game_id?: string
+          user_id?: string
+          ai_level?: string
+          user_plays_as?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_game_sessions_game_id_fkey"
+            columns: ["game_id"]
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_game_sessions_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -65,7 +169,6 @@ export interface Database {
           id: string
           updated_at: string | null
           username: string | null
-          // No rating column exists in the actual schema
         }
         Insert: {
           avatar_url?: string | null
@@ -73,7 +176,6 @@ export interface Database {
           id: string
           updated_at?: string | null
           username?: string | null
-          // No rating column exists in the actual schema
         }
         Update: {
           avatar_url?: string | null
@@ -81,7 +183,6 @@ export interface Database {
           id?: string
           updated_at?: string | null
           username?: string | null
-          // No rating column exists in the actual schema
         }
         Relationships: [
           {

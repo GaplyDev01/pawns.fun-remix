@@ -1,5 +1,4 @@
-import { AuthForm } from "@/components/auth/auth-form"
-import { signUp } from "@/app/actions/auth"
+import { AuthCard } from "@/components/auth/AuthCard"
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 
@@ -14,7 +13,7 @@ export default async function SignupPage() {
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center p-4">
-      <AuthForm type="signup" action={signUp} />
+      <AuthCard />
     </div>
   )
 }

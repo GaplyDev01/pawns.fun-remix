@@ -7,6 +7,7 @@ import { PageTransition } from "@/components/page-transition"
 import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from "@/components/theme-provider"
 import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -21,6 +22,9 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  // Call cookies() to opt out of Next.js cache
+  cookies()
+
   const supabase = await createClient()
   const { data } = await supabase.auth.getSession()
   const isLoggedIn = !!data.session

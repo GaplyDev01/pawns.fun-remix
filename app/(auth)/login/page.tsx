@@ -1,5 +1,4 @@
-import { AuthForm } from "@/components/auth/auth-form"
-import { signIn } from "@/app/actions/auth"
+import { AuthCard } from "@/components/auth/AuthCard"
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 
@@ -14,7 +13,7 @@ export default async function LoginPage() {
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center p-4">
-      <AuthForm type="login" action={signIn} />
+      <AuthCard />
     </div>
   )
 }
