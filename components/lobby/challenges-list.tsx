@@ -17,7 +17,6 @@ interface Challenge {
     avatar_url: string
   }
   time_control: string
-  color_preference: string
   created_at: string
 }
 
@@ -85,9 +84,7 @@ export function ChallengesList({ challenges }: ChallengesListProps) {
                 </Avatar>
                 <div>
                   <div className="font-medium">{challenge.challenger.username}</div>
-                  <div className="text-sm text-gray-400">
-                    {challenge.time_control} • {formatColorPreference(challenge.color_preference)}
-                  </div>
+                  <div className="text-sm text-gray-400">{challenge.time_control || "5+5"} • Random colors</div>
                 </div>
               </div>
 
@@ -107,9 +104,4 @@ export function ChallengesList({ challenges }: ChallengesListProps) {
       ))}
     </div>
   )
-}
-
-function formatColorPreference(preference: string): string {
-  if (preference === "random") return "Random Color"
-  return `Plays as ${preference.charAt(0).toUpperCase() + preference.slice(1)}`
 }

@@ -3,26 +3,58 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cancelChallenge } from "@/app/actions/game"
+import { cancelChallenge, generateInviteLink } from "@/app/actions/game"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { AnimatedButton } from "@/components/ui/AnimatedButton"
-import { Loader2 } from "lucide-react"
+import { AnimatedButton } from "@/components/animated-button"
+import { Loader2, Copy, Share2, Check } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import confetti from "canvas-confetti"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 
 interface WaitingScreenProps {
   challengeId: string
   timeControl: string
-  colorPreference: string
 }
 
-export function WaitingScreen({ challengeId, timeControl, colorPreference }: WaitingScreenProps) {
+export function WaitingScreen({ challengeId, timeControl }: WaitingScreenProps) {
   const [isWaiting, setIsWaiting] = useState(true)
   const [isCancelling, setIsCancelling] = useState(false)
   const [waitTime, setWaitTime] = useState(0)
+  const [inviteLink, setInviteLink] = useState("")
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
   const supabase = createClientComponentClient()
+
+  // Generate invite link when component mounts
+  useEffect(() => {
+    const fetchInviteLink = async () => {
+      try {
+        // Make sure to await the async function
+        const link = await generateInviteLink(challengeId)
+        setInviteLink(link)
+      } catch (error) {
+        console.error("Error generating invite link:", error)
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to generate invitation link",
+        })
+      }
+    }
+
+    fetchInviteLink()
+  }, [challengeId, toast])
 
   useEffect(() => {
     // Start timer
@@ -42,7 +74,7 @@ export function WaitingScreen({ challengeId, timeControl, colorPreference }: Wai
           filter: `id=eq.${challengeId}`,
         },
         (payload) => {
-          if (payload.new.status === "matched" && payload.new.game_id) {
+          if (payload.new.status === "accepted" && payload.new.game_id) {
             // Match found!
             confetti({
               particleCount: 100,
@@ -58,6 +90,17 @@ export function WaitingScreen({ challengeId, timeControl, colorPreference }: Wai
             // Short delay for confetti and toast to be visible
             setTimeout(() => {
               router.push(`/game/${payload.new.game_id}`)
+            }, 1500)
+          } else if (payload.new.status === "rejected") {
+            // Challenge was rejected or cancelled
+            toast({
+              title: "Challenge ended",
+              description: "The challenge has been cancelled or rejected.",
+            })
+
+            // Redirect to lobby
+            setTimeout(() => {
+              router.push("/dashboard/lobby")
             }, 1500)
           }
         },
@@ -81,18 +124,66 @@ export function WaitingScreen({ challengeId, timeControl, colorPreference }: Wai
           title: "Error",
           description: result.error,
         })
+        setIsCancelling(false)
         return
       }
 
-      router.push("/dashboard/lobby")
+      toast({
+        title: "Challenge cancelled",
+        description: "Redirecting to lobby...",
+      })
+
+      // Let the realtime subscription handle the redirect
+      // This ensures we don't redirect before the database is updated
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to cancel challenge. Please try again.",
       })
-    } finally {
       setIsCancelling(false)
+    }
+  }
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(inviteLink)
+      setCopied(true)
+      toast({
+        title: "Link copied!",
+        description: "Invitation link copied to clipboard",
+      })
+
+      // Reset copied state after 2 seconds
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Failed to copy",
+        description: "Please try again or copy the link manually",
+      })
+    }
+  }
+
+  const shareInvite = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Join my chess game!",
+          text: "I'm waiting for you to join my chess game on Pawns.fun!",
+          url: inviteLink,
+        })
+        toast({
+          title: "Shared successfully!",
+          description: "Your invitation has been shared",
+        })
+      } catch (err) {
+        // User probably canceled the share operation
+        console.log("Share was canceled or failed")
+      }
+    } else {
+      // Fallback for browsers that don't support the Web Share API
+      copyToClipboard()
     }
   }
 
@@ -116,14 +207,45 @@ export function WaitingScreen({ challengeId, timeControl, colorPreference }: Wai
 
           <div className="text-center space-y-1">
             <p className="text-gray-400">Time Control: {timeControl}</p>
-            <p className="text-gray-400">
-              Color:{" "}
-              {colorPreference === "random"
-                ? "Random"
-                : colorPreference.charAt(0).toUpperCase() + colorPreference.slice(1)}
-            </p>
+            <p className="text-gray-400">Colors will be randomly assigned</p>
           </div>
         </div>
+
+        <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
+          <DialogTrigger asChild>
+            <AnimatedButton className="w-full">
+              <Share2 className="mr-2 h-4 w-4" />
+              Invite Player
+            </AnimatedButton>
+          </DialogTrigger>
+          <DialogContent className="bg-chainBg/70 backdrop-blur-md border-chain1/20">
+            <DialogHeader>
+              <DialogTitle>Invite a Player</DialogTitle>
+              <DialogDescription>Share this link with someone to invite them to join your game.</DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-col space-y-4 mt-4">
+              <div className="flex space-x-2">
+                <Input value={inviteLink} readOnly className="bg-chainBg/80 flex-1" />
+                <Button size="icon" onClick={copyToClipboard} className="bg-chain1/20 hover:bg-chain1/30">
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
+
+              <div className="flex space-x-2">
+                <AnimatedButton className="flex-1" onClick={copyToClipboard}>
+                  <Copy className="mr-2 h-4 w-4" />
+                  Copy Link
+                </AnimatedButton>
+                {navigator.share && (
+                  <AnimatedButton className="flex-1" onClick={shareInvite}>
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Share
+                  </AnimatedButton>
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <AnimatedButton onClick={handleCancel} disabled={isCancelling} variant="destructive" className="w-full">
           {isCancelling ? (

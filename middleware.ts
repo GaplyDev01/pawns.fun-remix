@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
+import { ensureProfileExists } from "@/lib/ensure-profile"
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -25,13 +26,35 @@ export async function middleware(request: NextRequest) {
     },
   )
 
-  // Do not run code between createServerClient and
-  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
-  // issues with users being randomly logged out.
   // IMPORTANT: DO NOT REMOVE auth.getUser()
   const {
     data: { user },
   } = await supabase.auth.getUser()
+
+  // If user is authenticated, ensure they have a profile
+  if (user) {
+    try {
+      // We don't await this because we don't want to block the request
+      // It's okay if the profile is created after the current request
+      ensureProfileExists(user).catch((err) => {
+        // Just log the error, but don't block the request
+        console.error("Error ensuring profile exists in middleware:", err)
+      })
+    } catch (error) {
+      // Just log the error, but don't block the request
+      console.error("Unexpected error in middleware profile check:", error)
+    }
+
+    // Check if there's a returnUrl in the query params after login
+    const url = request.nextUrl.clone()
+    const returnUrl = url.searchParams.get("returnUrl")
+
+    if (returnUrl && (url.pathname === "/login" || url.pathname === "/signup")) {
+      url.pathname = returnUrl
+      url.searchParams.delete("returnUrl")
+      return NextResponse.redirect(url)
+    }
+  }
 
   // If the user is not logged in and trying to access a protected route, redirect to login
   if (
@@ -42,6 +65,14 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname !== "/"
   ) {
     const url = request.nextUrl.clone()
+
+    // If trying to access a join link, save the return URL
+    if (request.nextUrl.pathname.startsWith("/join/")) {
+      url.pathname = "/login"
+      url.searchParams.set("returnUrl", request.nextUrl.pathname)
+      return NextResponse.redirect(url)
+    }
+
     url.pathname = "/login"
     return NextResponse.redirect(url)
   }

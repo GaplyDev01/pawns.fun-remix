@@ -69,42 +69,39 @@ export interface Database {
           id: string
           created_at: string
           challenger_id: string
+          challenged_id: string
           acceptor_id: string | null
-          time_control: string
-          color_preference: string
-          status: string
+          status: "pending" | "accepted" | "rejected" | "expired"
           game_id: string | null
-          initial_time_ms: number
-          increment_ms: number
         }
         Insert: {
           id?: string
           created_at?: string
           challenger_id: string
+          challenged_id: string
           acceptor_id?: string | null
-          time_control: string
-          color_preference: string
           status?: string
           game_id?: string | null
-          initial_time_ms: number
-          increment_ms: number
         }
         Update: {
           id?: string
           created_at?: string
           challenger_id?: string
+          challenged_id?: string
           acceptor_id?: string | null
-          time_control?: string
-          color_preference?: string
           status?: string
           game_id?: string | null
-          initial_time_ms?: number
-          increment_ms?: number
         }
         Relationships: [
           {
             foreignKeyName: "challenges_challenger_id_fkey"
             columns: ["challenger_id"]
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenges_challenged_id_fkey"
+            columns: ["challenged_id"]
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },

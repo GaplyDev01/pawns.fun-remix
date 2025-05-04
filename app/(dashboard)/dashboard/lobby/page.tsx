@@ -60,7 +60,6 @@ export default async function LobbyPage() {
       avatar_url: challenge.challenger.avatar_url,
     },
     time_control: challenge.time_control,
-    color_preference: challenge.color_preference,
     created_at: challenge.created_at,
   }))
 

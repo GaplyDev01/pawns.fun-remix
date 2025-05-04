@@ -11,13 +11,15 @@ interface AuthState {
   success: string
 }
 
-export async function signIn(prevState: AuthState, formData: FormData): Promise<AuthState> {
+// Update the signIn function to handle returnUrl
+export async function signIn(prevState: AuthState, formData: FormData): Promise<AuthState | { redirect: string }> {
   // Call cookies() to opt out of Next.js cache
   cookies()
 
   const supabase = await createClient()
   const email = formData.get("email") as string
   const password = formData.get("password") as string
+  const returnUrl = formData.get("returnUrl") as string | null
 
   if (!email || !password) {
     return { error: "Email and password are required", success: "" }
@@ -32,7 +34,13 @@ export async function signIn(prevState: AuthState, formData: FormData): Promise<
     return { error: error.message, success: "" }
   }
 
-  redirect("/dashboard")
+  // If returnUrl is provided, redirect there
+  if (returnUrl) {
+    return { redirect: returnUrl }
+  }
+
+  // Otherwise redirect to dashboard
+  return { redirect: "/dashboard" }
 }
 
 export async function signUp(prevState: AuthState, formData: FormData): Promise<AuthState> {

@@ -31,19 +31,27 @@ interface Game {
 
 interface GameBoardPageProps {
   game: Game
+  currentUserId: string
 }
 
-export function GameBoardPage({ game }: GameBoardPageProps) {
+export function GameBoardPage({ game, currentUserId }: GameBoardPageProps) {
   const [fen, setFen] = useState(game.fen_position || "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
   const [whiteTime, setWhiteTime] = useState(game.white_time_remaining || 600000) // 10 minutes in ms
   const [blackTime, setBlackTime] = useState(game.black_time_remaining || 600000)
   const [isWhiteTurn, setIsWhiteTurn] = useState(true)
   const [showMatchModal, setShowMatchModal] = useState(false)
+  const [userPlaysWhite, setUserPlaysWhite] = useState(game.white.id === currentUserId)
   const boardRef = useRef(null)
   const supabase = createClientComponentClient()
   const { toast } = useToast()
 
   useEffect(() => {
+    // Show match modal briefly when component mounts
+    setShowMatchModal(true)
+    const timer = setTimeout(() => {
+      setShowMatchModal(false)
+    }, 3000)
+
     // Subscribe to game updates
     const channel = supabase
       .channel(`game:${game.id}`)
@@ -54,11 +62,22 @@ export function GameBoardPage({ game }: GameBoardPageProps) {
       .subscribe()
 
     return () => {
+      clearTimeout(timer)
       supabase.removeChannel(channel)
     }
   }, [game.id, isWhiteTurn, supabase])
 
   const handleMove = (sourceSquare: string, targetSquare: string) => {
+    // Only allow moves if it's the user's turn
+    if ((userPlaysWhite && !isWhiteTurn) || (!userPlaysWhite && isWhiteTurn)) {
+      toast({
+        title: "Not your turn",
+        description: "Please wait for your opponent to move",
+        variant: "destructive",
+      })
+      return false
+    }
+
     // In a real app, you would validate the move and update the game state
     toast({
       title: "Move made",
@@ -71,6 +90,9 @@ export function GameBoardPage({ game }: GameBoardPageProps) {
     return true
   }
 
+  // Determine board orientation based on player color
+  const boardOrientation = userPlaysWhite ? "white" : "black"
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
@@ -82,7 +104,7 @@ export function GameBoardPage({ game }: GameBoardPageProps) {
             </div>
           </div>
 
-          <AnimatedBoard ref={boardRef} position={fen} onPieceDrop={handleMove} boardOrientation="white" />
+          <AnimatedBoard ref={boardRef} position={fen} onPieceDrop={handleMove} boardOrientation={boardOrientation} />
 
           <div className="mt-4 flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -100,6 +122,10 @@ export function GameBoardPage({ game }: GameBoardPageProps) {
                 <div className="flex justify-between">
                   <span className="text-gray-400">Time Control:</span>
                   <span>{game.time_control}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Your Color:</span>
+                  <span>{userPlaysWhite ? "White" : "Black"}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Rating Difference:</span>
@@ -120,7 +146,11 @@ export function GameBoardPage({ game }: GameBoardPageProps) {
         </div>
       </div>
 
-      <MatchFoundModal open={showMatchModal} onClose={() => setShowMatchModal(false)} opponent={game.black} />
+      <MatchFoundModal
+        open={showMatchModal}
+        onClose={() => setShowMatchModal(false)}
+        opponent={userPlaysWhite ? game.black : game.white}
+      />
     </div>
   )
 }

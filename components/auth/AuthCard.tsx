@@ -16,7 +16,11 @@ import { useToast } from "@/components/ui/use-toast"
 
 const initialState = { error: "", success: "" }
 
-export function AuthCard() {
+interface AuthCardProps {
+  returnUrl?: string
+}
+
+export function AuthCard({ returnUrl }: AuthCardProps) {
   const [showPassword, setShowPassword] = useState(false)
   const [resetDialogOpen, setResetDialogOpen] = useState(false)
   const [signInState, signInAction] = useActionState(signIn, initialState)
@@ -64,6 +68,20 @@ export function AuthCard() {
     }
   }, [resetState?.success, toast])
 
+  async function signInActionWithReturnUrl(formData: FormData) {
+    if (returnUrl) {
+      formData.append("returnUrl", returnUrl)
+    }
+    return await signInAction(formData)
+  }
+
+  async function signUpActionWithReturnUrl(formData: FormData) {
+    if (returnUrl) {
+      formData.append("returnUrl", returnUrl)
+    }
+    return await signUpAction(formData)
+  }
+
   return (
     <div className="w-full max-w-md">
       <Card className="bg-chainBg/60 backdrop-blur-md border-chain1/20">
@@ -79,7 +97,7 @@ export function AuthCard() {
               <CardDescription>Enter your credentials to access your account</CardDescription>
             </CardHeader>
             <CardContent>
-              <form action={signInAction} className="space-y-4">
+              <form action={signInActionWithReturnUrl} className="space-y-4">
                 {signInState?.error && (
                   <Alert variant="destructive" className="mb-4">
                     <AlertCircle className="h-4 w-4" />
@@ -173,7 +191,7 @@ export function AuthCard() {
               <CardDescription>Fill in the details below to create your account</CardDescription>
             </CardHeader>
             <CardContent>
-              <form action={signUpAction} className="space-y-4">
+              <form action={signUpActionWithReturnUrl} className="space-y-4">
                 {signUpState?.error && (
                   <Alert variant="destructive" className="mb-4">
                     <AlertCircle className="h-4 w-4" />

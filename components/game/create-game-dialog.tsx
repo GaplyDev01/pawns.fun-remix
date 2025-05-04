@@ -23,12 +23,10 @@ interface CreateGameDialogProps {
 }
 
 type TimeControl = "1+0" | "3+2" | "5+5" | "10+0"
-type ColorPreference = "white" | "black" | "random"
 type OpponentType = "human" | "ai"
 
 export function CreateGameDialog({ open, onOpenChange }: CreateGameDialogProps) {
   const [timeControl, setTimeControl] = useState<TimeControl>("5+5")
-  const [colorPreference, setColorPreference] = useState<ColorPreference>("random")
   const [opponentType, setOpponentType] = useState<OpponentType>("human")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
@@ -40,7 +38,6 @@ export function CreateGameDialog({ open, onOpenChange }: CreateGameDialogProps) 
 
       const result = await createGame({
         timeControl,
-        colorPreference,
         opponentType,
       })
 
@@ -98,26 +95,6 @@ export function CreateGameDialog({ open, onOpenChange }: CreateGameDialogProps) 
                 <div key={option.value} className="flex items-center space-x-2">
                   <RadioGroupItem value={option.value} id={`time-${option.value}`} className="border-chain1/50" />
                   <Label htmlFor={`time-${option.value}`}>{option.label}</Label>
-                </div>
-              ))}
-            </RadioGroup>
-          </div>
-
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium">Color Preference</h3>
-            <RadioGroup
-              value={colorPreference}
-              onValueChange={(value) => setColorPreference(value as ColorPreference)}
-              className="grid grid-cols-3 gap-2"
-            >
-              {[
-                { value: "white", label: "White" },
-                { value: "black", label: "Black" },
-                { value: "random", label: "Random" },
-              ].map((option) => (
-                <div key={option.value} className="flex items-center space-x-2">
-                  <RadioGroupItem value={option.value} id={`color-${option.value}`} className="border-chain1/50" />
-                  <Label htmlFor={`color-${option.value}`}>{option.label}</Label>
                 </div>
               ))}
             </RadioGroup>

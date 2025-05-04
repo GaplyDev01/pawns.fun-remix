@@ -39,11 +39,7 @@ export default async function WaitingPage({ params }: { params: { challengeId: s
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <WaitingScreen
-        challengeId={challenge.id}
-        timeControl={challenge.time_control}
-        colorPreference={challenge.color_preference}
-      />
+      <WaitingScreen challengeId={challenge.id} timeControl={challenge.time_control} />
     </div>
   )
 }
