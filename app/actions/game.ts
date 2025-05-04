@@ -153,14 +153,15 @@ export async function createGame(params: CreateGameParams) {
       const challengeId = uuidv4()
       const gameId = uuidv4() // Pre-generate game ID for the challenge
 
-      // Create a game first
+      // Create a game first - using the correct column names
       const { error: gameError } = await adminClient.from("games").insert({
         id: gameId,
-        white_id: user.id,
+        white_id: user.id, // Using white_id as per the schema
         fen_position: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", // Initial position
         status: "waiting_for_players", // Use the correct enum value from the schema
         white_time_remaining: initialTimeMs,
         black_time_remaining: initialTimeMs,
+        time_control: timeControl,
       })
 
       if (gameError) {
@@ -182,7 +183,6 @@ export async function createGame(params: CreateGameParams) {
         challenged_id: openChallengeId, // Use the open challenge user ID
         status: "pending",
         game_id: gameId,
-        game_mode_id: 1, // Default game mode ID
         expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Expires in 24 hours
       })
 
@@ -200,15 +200,17 @@ export async function createGame(params: CreateGameParams) {
       // For AI games, randomly assign color
       const userPlaysWhite = Math.random() >= 0.5
 
-      // Create game entry
+      // Create game entry - using the correct column names
       const { error: gameError } = await adminClient.from("games").insert({
         id: gameId,
-        white_id: userPlaysWhite ? user.id : null,
-        black_id: userPlaysWhite ? null : user.id,
+        white_id: userPlaysWhite ? user.id : null, // Using white_id as per the schema
+        black_id: userPlaysWhite ? null : user.id, // Using black_id as per the schema
         fen_position: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", // Initial position
         white_time_remaining: initialTimeMs,
         black_time_remaining: initialTimeMs,
+        time_control: timeControl,
         status: "in_progress", // Use the correct enum value from the schema
+        is_ai_game: true,
       })
 
       if (gameError) {
@@ -298,12 +300,12 @@ export async function acceptChallenge(challengeId: string) {
     const whiteId = challengerPlaysWhite ? challenge.challenger_id : user.id
     const blackId = challengerPlaysWhite ? user.id : challenge.challenger_id
 
-    // Update the game with player information
+    // Update the game with player information - using the correct column names
     const { error: updateGameError } = await adminClient
       .from("games")
       .update({
-        white_id: whiteId,
-        black_id: blackId,
+        white_id: whiteId, // Using white_id as per the schema
+        black_id: blackId, // Using black_id as per the schema
         status: "in_progress", // Use the correct enum value from the schema
       })
       .eq("id", gameId)
@@ -403,12 +405,13 @@ export async function createDirectChallenge(opponentId: string, timeControl: str
     const challengeId = uuidv4()
     const gameId = uuidv4() // Pre-generate game ID
 
-    // Create a game first
+    // Create a game first - using the correct column names
     const { error: gameError } = await adminClient.from("games").insert({
       id: gameId,
-      white_id: user.id,
+      white_id: user.id, // Using white_id as per the schema
       fen_position: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", // Initial position
       status: "waiting_for_players", // Use the correct enum value from the schema
+      time_control: timeControl,
     })
 
     if (gameError) {
@@ -423,7 +426,6 @@ export async function createDirectChallenge(opponentId: string, timeControl: str
       challenged_id: opponentId, // Direct challenge to a specific player
       status: "pending",
       game_id: gameId, // Pre-assign game ID
-      game_mode_id: 1, // Default game mode ID
       expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Expires in 24 hours
     })
 
