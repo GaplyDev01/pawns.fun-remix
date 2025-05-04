@@ -11,6 +11,8 @@ export default async function ResetPasswordPage({
   searchParams: { [key: string]: string | undefined }
 }) {
   const supabase = await createClient()
+
+  // Get the user session
   const { data } = await supabase.auth.getSession()
 
   // If user is already logged in, redirect to dashboard

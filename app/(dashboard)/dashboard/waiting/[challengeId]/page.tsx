@@ -5,13 +5,15 @@ import { notFound, redirect } from "next/navigation"
 export default async function WaitingPage({ params }: { params: { challengeId: string } }) {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // Get the user session
+  const { data } = await supabase.auth.getSession()
 
-  if (!user) {
+  // If no session, redirect to login
+  if (!data.session) {
     redirect("/login")
   }
+
+  const user = data.session.user
 
   // Fetch challenge details
   const { data: challenge, error } = await supabase.from("challenges").select("*").eq("id", params.challengeId).single()

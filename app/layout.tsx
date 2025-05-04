@@ -26,6 +26,8 @@ export default async function RootLayout({
   cookies()
 
   const supabase = await createClient()
+
+  // Get the user session - no redirect needed as this is the root layout
   const { data } = await supabase.auth.getSession()
   const isLoggedIn = !!data.session
 

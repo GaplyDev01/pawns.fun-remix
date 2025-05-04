@@ -4,6 +4,8 @@ import { redirect } from "next/navigation"
 
 export default async function LoginPage() {
   const supabase = await createClient()
+
+  // Get the user session
   const { data } = await supabase.auth.getSession()
 
   // If user is already logged in, redirect to dashboard

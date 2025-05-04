@@ -2,9 +2,18 @@ import { LobbyTable } from "@/components/lobby/lobby-table"
 import { createClient } from "@/lib/supabase/server"
 import { ChallengesList } from "@/components/lobby/challenges-list"
 import { CreateGameButton } from "@/components/game/create-game-button"
+import { redirect } from "next/navigation"
 
 export default async function LobbyPage() {
   const supabase = await createClient()
+
+  // Get the user session
+  const { data } = await supabase.auth.getSession()
+
+  // If no session, redirect to login
+  if (!data.session) {
+    redirect("/login")
+  }
 
   // Fetch open games
   const { data: openGames } = await supabase

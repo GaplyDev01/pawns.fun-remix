@@ -1,9 +1,18 @@
 import { LeaderboardTable } from "@/components/leaderboard/leaderboard-table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createClient } from "@/lib/supabase/server"
+import { redirect } from "next/navigation"
 
 export default async function LeaderboardPage() {
   const supabase = await createClient()
+
+  // Get the user session
+  const { data } = await supabase.auth.getSession()
+
+  // If no session, redirect to login
+  if (!data.session) {
+    redirect("/login")
+  }
 
   // Get the latest rating for each user by joining profiles with rating_history
   const { data: globalLeaderboard } = await supabase

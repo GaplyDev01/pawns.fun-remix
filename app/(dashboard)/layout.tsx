@@ -8,8 +8,11 @@ export default async function DashboardLayout({
   children: React.ReactNode
 }) {
   const supabase = await createClient()
+
+  // Get the user session
   const { data } = await supabase.auth.getSession()
 
+  // If no session, redirect to login
   if (!data.session) {
     redirect("/login")
   }

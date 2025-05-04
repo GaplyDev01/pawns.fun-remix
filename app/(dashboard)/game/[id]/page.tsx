@@ -1,19 +1,35 @@
 import { GameBoardPage } from "@/components/game/game-board-page"
-import { createSupabase } from "@/lib/supabase-client"
-import { notFound } from "next/navigation"
+import { createClient } from "@/lib/supabase/server"
+import { notFound, redirect } from "next/navigation"
 
 export default async function GamePage({ params }: { params: { id: string } }) {
-  const supabase = createSupabase()
+  const supabase = await createClient()
+
+  // Get the user session
+  const { data } = await supabase.auth.getSession()
+
+  // If no session, redirect to login
+  if (!data.session) {
+    redirect("/login")
+  }
 
   // Fetch game data
-  const { data: game } = await supabase
+  const { data: game, error } = await supabase
     .from("games")
     .select("*, white:white_id(*), black:black_id(*)")
     .eq("id", params.id)
     .single()
 
-  if (!game) {
+  if (error || !game) {
     notFound()
+  }
+
+  // Verify user is a participant in the game
+  const user = data.session.user
+  if (game.white.id !== user.id && game.black?.id !== user.id && !game.is_ai_game) {
+    // User is not a participant, redirect to dashboard
+    // In a real app, you might want to allow spectating
+    redirect("/dashboard")
   }
 
   return <GameBoardPage game={game} />
