@@ -26,6 +26,8 @@ type TimeControl = "1+0" | "3+2" | "5+5" | "10+0"
 type OpponentType = "human" | "ai"
 
 export function CreateGameDialog({ open, onOpenChange }: CreateGameDialogProps) {
+  // For now, hardcode to game mode 1 (can be replaced with a selector if needed)
+  const [gameModeId, setGameModeId] = useState<number>(1);
   const [timeControl, setTimeControl] = useState<TimeControl>("5+5")
   const [opponentType, setOpponentType] = useState<OpponentType>("human")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -39,7 +41,8 @@ export function CreateGameDialog({ open, onOpenChange }: CreateGameDialogProps) 
       const result = await createGame({
         timeControl,
         opponentType,
-      })
+        gameModeId,
+      }); // already correct, just confirming usage
 
       if (result.error) {
         toast({

@@ -12,6 +12,7 @@ type OpponentType = "human" | "ai"
 interface CreateGameParams {
   timeControl: TimeControl
   opponentType: OpponentType
+  gameModeId: number
 }
 
 // Helper to convert time control string to milliseconds
@@ -144,98 +145,110 @@ export async function createGame(params: CreateGameParams) {
     return { error: "Failed to ensure user profile exists. Please try again." }
   }
 
-  const { timeControl, opponentType } = params
-  const { initial: initialTimeMs, increment: incrementMs } = await timeControlToMs(timeControl)
+  const { timeControl, opponentType, gameModeId } = params;
+const { initial: initialTimeMs, increment: incrementMs } = await timeControlToMs(timeControl);
+const now = new Date().toISOString();
+if (!gameModeId) {
+  return { error: "Missing game mode ID" };
+}
 
   try {
     if (opponentType === "human") {
-      // Create a challenge for human opponent
-      const challengeId = uuidv4()
-      const gameId = uuidv4() // Pre-generate game ID for the challenge
+  // Create a challenge for human opponent
+  const challengeId = uuidv4();
+  const gameId = uuidv4(); // Pre-generate game ID for the challenge
 
-      // Create a game first - using only columns that exist in the schema
-      const { error: gameError } = await adminClient.from("games").insert({
-        id: gameId,
-        white_id: user.id,
-        fen_position: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", // Initial position
-        white_time_remaining: initialTimeMs,
-        black_time_remaining: initialTimeMs,
-        // Removed time_control field as it doesn't exist in the schema
-        is_ai_game: false,
-      })
+  // Find a suitable user for open challenges
+  const openChallengeId = await findOpenChallengeUser();
+  if (!openChallengeId) {
+    return { error: "Could not find or create an open challenge user. Please contact an administrator." };
+  }
 
-      if (gameError) {
-        console.error("Error creating game:", gameError)
-        return { error: "Failed to create game: " + gameError.message }
-      }
+  // Validate user IDs
+  if (!user.id || !openChallengeId) {
+    return { error: "Invalid player IDs." };
+  }
 
-      // Find a suitable user for open challenges
-      const openChallengeId = await findOpenChallengeUser()
+  // Create a game entry with all required fields
+  const { error: gameError } = await adminClient.from("games").insert({
+    id: gameId,
+    white_player_id: user.id,
+    black_player_id: openChallengeId,
+    game_mode_id: gameModeId,
+    fen_position: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+    status: "waiting_for_players",
+    created_at: now,
+    updated_at: now,
+  });
+  if (gameError) {
+    console.error("Error creating game:", gameError);
+    return { error: "Failed to create game: " + gameError.message };
+  }
 
-      if (!openChallengeId) {
-        return { error: "Could not find or create an open challenge user. Please contact an administrator." }
-      }
+  // Create the challenge with the open challenge user as the challenged_id
+  const { error } = await adminClient.from("challenges").insert({
+    id: challengeId,
+    challenger_id: user.id,
+    challenged_id: openChallengeId,
+    game_mode_id: gameModeId,
+    status: "pending",
+    game_id: gameId,
+    expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    created_at: now,
+    updated_at: now,
+  });
+  if (error) {
+    console.error("Error creating challenge:", error);
+    return { error: "Failed to create challenge: " + error.message };
+  }
 
-      // Create the challenge with the open challenge user as the challenged_id
-      const { error } = await adminClient.from("challenges").insert({
-        id: challengeId,
-        challenger_id: user.id,
-        challenged_id: openChallengeId, // Use the open challenge user ID
-        status: "pending",
-        game_id: gameId,
-        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Expires in 24 hours
-      })
-
-      if (error) {
-        console.error("Error creating challenge:", error)
-        return { error: "Failed to create challenge: " + error.message }
-      }
-
-      revalidatePath("/dashboard/lobby")
-      return { challengeId, gameId }
-    } else {
+  revalidatePath("/dashboard/lobby");
+  return { challengeId, gameId };
+} else {
       // Create a game with AI opponent
       const gameId = uuidv4()
 
       // For AI games, randomly assign color
       const userPlaysWhite = Math.random() >= 0.5
 
-      // Create game entry - using only columns that exist in the schema
-      const { error: gameError } = await adminClient.from("games").insert({
-        id: gameId,
-        white_id: userPlaysWhite ? user.id : null,
-        black_id: userPlaysWhite ? null : user.id,
-        fen_position: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", // Initial position
-        white_time_remaining: initialTimeMs,
-        black_time_remaining: initialTimeMs,
-        // Removed time_control field as it doesn't exist in the schema
-        is_ai_game: true,
-      })
-
-      if (gameError) {
-        console.error("Error creating game:", gameError)
-        return { error: "Failed to create game: " + gameError.message }
-      }
-
-      // Create AI game session
-      const aiSessionId = uuidv4()
-      const { error: aiSessionError } = await adminClient.from("ai_game_sessions").insert({
-        id: aiSessionId,
-        game_id: gameId,
-        user_id: user.id,
-        ai_level: "medium", // Default AI level
-        user_plays_as: userPlaysWhite ? "white" : "black",
-      })
-
-      if (aiSessionError) {
-        console.error("Error creating AI session:", aiSessionError)
-        return { error: "Failed to create AI game session: " + aiSessionError.message }
-      }
-
-      revalidatePath("/dashboard/lobby")
-      return { gameId }
-    }
-  } catch (error) {
+      // Validate user ID
+  if (!user.id) {
+    return { error: "Invalid player ID." };
+  }
+  // Create game entry with all required fields
+  const { error: gameError } = await adminClient.from("games").insert({
+    id: gameId,
+    white_player_id: userPlaysWhite ? user.id : null,
+    black_player_id: userPlaysWhite ? null : user.id,
+    game_mode_id: gameModeId,
+    fen_position: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+    status: "in_progress",
+    created_at: now,
+    updated_at: now,
+  });
+  if (gameError) {
+    console.error("Error creating game:", gameError);
+    return { error: "Failed to create game: " + gameError.message };
+  }
+  // Create AI game session
+  const aiSessionId = uuidv4();
+  const { error: aiSessionError } = await adminClient.from("ai_game_sessions").insert({
+    id: aiSessionId,
+    game_id: gameId,
+    user_id: user.id,
+    ai_level: "medium",
+    user_plays_as: userPlaysWhite ? "white" : "black",
+    created_at: now,
+    updated_at: now,
+  });
+  if (aiSessionError) {
+    console.error("Error creating AI session:", aiSessionError);
+    return { error: "Failed to create AI game session: " + aiSessionError.message };
+  }
+  revalidatePath("/dashboard/lobby");
+  return { gameId };
+} 
+} catch (error) {
     console.error("Error in createGame:", error)
     return { error: "An unexpected error occurred" }
   }
