@@ -151,23 +151,23 @@ export function AnimatedHero({ isLoggedIn }: AnimatedHeroProps) {
               {/* Matrix-like falling characters */}
               <div className="absolute inset-0 overflow-hidden opacity-20 pointer-events-none">
                 {Array.from({ length: 10 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="absolute text-xs font-mono text-emerald-400"
-                    style={{
-                      left: `${i * 10 + Math.random() * 5}%`,
-                      top: `-20px`,
-                      animation: `matrix-fall ${5 + Math.random() * 10}s linear infinite`,
-                      animationDelay: `${Math.random() * 5}s`,
-                    }}
-                  >
-                    {Array.from({ length: 20 }).map((_, j) => (
-                      <div key={j} className="my-1">
-                        {String.fromCharCode(0x30a0 + Math.random() * 96)}
-                      </div>
-                    ))}
-                  </div>
-                ))}
+  <div
+    key={i}
+    className="absolute text-xs font-mono text-emerald-400"
+    style={{
+      left: `${i * 10 + i * 0.5}%`, // deterministic
+      top: `-20px`,
+      animation: `matrix-fall ${6 + i}s linear infinite`, // deterministic
+      animationDelay: `${i * 0.3}s`, // deterministic
+    }}
+  >
+    {Array.from({ length: 20 }).map((_, j) => (
+      <div key={j} className="my-1">
+        {String.fromCharCode(0x30a0 + ((i * 17 + j * 13) % 96))} {/* deterministic */}
+      </div>
+    ))}
+  </div>
+))}
               </div>
             </div>
           </div>

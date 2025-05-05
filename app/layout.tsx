@@ -32,7 +32,7 @@ export default async function RootLayout({
   const isLoggedIn = !!data.session
 
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" style={{ colorScheme: "dark" }}>
       <body className={`${inter.className} bg-chain-bg text-white selection:bg-emerald-500/40 min-h-screen`}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
           <AppNav isLoggedIn={isLoggedIn} />

@@ -1,4 +1,4 @@
-import { AuthCard } from "@/components/auth/AuthCard"
+import SignupPageClient from "./SignupPageClient"
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 
@@ -13,9 +13,5 @@ export default async function SignupPage() {
     redirect("/dashboard")
   }
 
-  return (
-    <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center p-4">
-      <AuthCard />
-    </div>
-  )
+  return <SignupPageClient />
 }

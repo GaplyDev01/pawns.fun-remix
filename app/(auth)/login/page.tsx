@@ -7,6 +7,7 @@ export default async function LoginPage({
 }: {
   searchParams: { [key: string]: string | undefined }
 }) {
+  const params = await searchParams;
   const supabase = await createClient()
 
   // Get the user session
@@ -14,7 +15,7 @@ export default async function LoginPage({
 
   // If user is already logged in, redirect to dashboard or returnUrl if provided
   if (data.session) {
-    const returnUrl = searchParams.returnUrl
+    const returnUrl = params.returnUrl
     if (returnUrl) {
       redirect(returnUrl)
     }
@@ -23,7 +24,7 @@ export default async function LoginPage({
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center p-4">
-      <AuthCard returnUrl={searchParams.returnUrl} />
+      <AuthCard returnUrl={params.returnUrl} />
     </div>
   )
 }
