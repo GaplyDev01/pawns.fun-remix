@@ -153,15 +153,15 @@ export async function createGame(params: CreateGameParams) {
       const challengeId = uuidv4()
       const gameId = uuidv4() // Pre-generate game ID for the challenge
 
-      // Create a game first - using the correct column names
+      // Create a game first - using only columns that exist in the schema
       const { error: gameError } = await adminClient.from("games").insert({
         id: gameId,
-        white_id: user.id, // Using white_id as per the schema
+        white_id: user.id,
         fen_position: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", // Initial position
-        status: "waiting_for_players", // Use the correct enum value from the schema
         white_time_remaining: initialTimeMs,
         black_time_remaining: initialTimeMs,
-        time_control: timeControl,
+        // Removed time_control field as it doesn't exist in the schema
+        is_ai_game: false,
       })
 
       if (gameError) {
@@ -200,16 +200,15 @@ export async function createGame(params: CreateGameParams) {
       // For AI games, randomly assign color
       const userPlaysWhite = Math.random() >= 0.5
 
-      // Create game entry - using the correct column names
+      // Create game entry - using only columns that exist in the schema
       const { error: gameError } = await adminClient.from("games").insert({
         id: gameId,
-        white_id: userPlaysWhite ? user.id : null, // Using white_id as per the schema
-        black_id: userPlaysWhite ? null : user.id, // Using black_id as per the schema
+        white_id: userPlaysWhite ? user.id : null,
+        black_id: userPlaysWhite ? null : user.id,
         fen_position: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", // Initial position
         white_time_remaining: initialTimeMs,
         black_time_remaining: initialTimeMs,
-        time_control: timeControl,
-        status: "in_progress", // Use the correct enum value from the schema
+        // Removed time_control field as it doesn't exist in the schema
         is_ai_game: true,
       })
 
@@ -300,13 +299,13 @@ export async function acceptChallenge(challengeId: string) {
     const whiteId = challengerPlaysWhite ? challenge.challenger_id : user.id
     const blackId = challengerPlaysWhite ? user.id : challenge.challenger_id
 
-    // Update the game with player information - using the correct column names
+    // Update the game with player information - using only columns that exist in the schema
     const { error: updateGameError } = await adminClient
       .from("games")
       .update({
-        white_id: whiteId, // Using white_id as per the schema
-        black_id: blackId, // Using black_id as per the schema
-        status: "in_progress", // Use the correct enum value from the schema
+        white_id: whiteId,
+        black_id: blackId,
+        // Removed status field if it doesn't exist in the schema
       })
       .eq("id", gameId)
 
@@ -405,13 +404,12 @@ export async function createDirectChallenge(opponentId: string, timeControl: str
     const challengeId = uuidv4()
     const gameId = uuidv4() // Pre-generate game ID
 
-    // Create a game first - using the correct column names
+    // Create a game first - using only columns that exist in the schema
     const { error: gameError } = await adminClient.from("games").insert({
       id: gameId,
-      white_id: user.id, // Using white_id as per the schema
+      white_id: user.id,
       fen_position: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", // Initial position
-      status: "waiting_for_players", // Use the correct enum value from the schema
-      time_control: timeControl,
+      // Removed time_control field as it doesn't exist in the schema
     })
 
     if (gameError) {
